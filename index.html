@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NFC Battle</title>
+    <style>
+        :root {
+            --bg-dark: #12101a;
+            --primary: #ff3366;
+            --hp-green: #00ff88;
+            --mana-blue: #00d4ff;
+            --card-fire: #ff5e00;
+            --card-heal: #00ff88;
+            --card-ice: #00ccff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1625, var(--bg-dark));
+            color: white;
+            height: 100vh;
+            max-width: 400px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        /* Top HUD - Player */
+        .hud {
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-info { width: 100%; }
+        
+        .bar-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .hp-bar {
+            height: 100%;
+            background: var(--hp-green);
+            width: 100%;
+            transition: width 0.3s ease-out;
+            box-shadow: 0 0 10px var(--hp-green);
+        }
+
+        /* Battlefield */
+        .battlefield {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .monster {
+            font-size: 100px;
+            filter: drop-shadow(0 0 20px rgba(255,51,102,0.5));
+            transition: transform 0.1s, filter 0.2s;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .monster.hit {
+            transform: scale(0.9) translateX(10px) !important;
+            filter: drop-shadow(0 0 30px red) brightness(2) !important;
+            animation: none;
+        }
+
+        .monster-stats {
+            text-align: center;
+            margin-top: 20px;
+            width: 80%;
+        }
+
+        .monster-name {
+            font-size: 24px;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .monster-hp-container {
+            width: 100%;
+            height: 15px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 15px;
+            border: 1px solid var(--primary);
+            overflow: hidden;
+        }
+
+        .monster-hp-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, var(--primary));
+            width: 100%;
+            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Instructions */
+        .instruction {
+            margin-top: 40px;
+            color: #888;
+            font-size: 13px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* Floating Damage Numbers */
+        .floating-text {
+            position: absolute;
+            font-size: 28px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        }
+
+        /* NFC Cards Area (Simulation) */
+        .cards-area {
+            padding: 20px;
+            background: rgba(0,0,0,0.4);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .cards-title {
+            text-align: center;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .cards-row {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .nfc-card {
+            width: 80px;
+            height: 120px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            background: #222;
+        }
+
+        .nfc-card:active {
+            transform: scale(0.9);
+        }
+
+        .nfc-card.fire {
+            border: 2px solid var(--card-fire);
+            box-shadow: 0 0 15px rgba(255,94,0,0.4);
+        }
+        .nfc-card.fire:active { box-shadow: 0 0 30px var(--card-fire); }
+
+        .nfc-card.heal {
+            border: 2px solid var(--card-heal);
+            box-shadow: 0 0 15px rgba(0,255,136,0.4);
+        }
+        .nfc-card.heal:active { box-shadow: 0 0 30px var(--card-heal); }
+
+        .nfc-card.ice {
+            border: 2px solid var(--card-ice);
+            box-shadow: 0 0 15px rgba(0,204,255,0.4);
+        }
+        .nfc-card.ice:active { box-shadow: 0 0 30px var(--card-ice); }
+
+        .card-icon { font-size: 30px; margin-bottom: 10px; }
+        .card-name { font-size: 12px; font-weight: bold; }
+
+        /* Victory Screen */
+        .victory {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            z-index: 200;
+        }
+
+        .victory.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .victory h1 {
+            color: #ffd700;
+            font-size: 40px;
+            text-shadow: 0 0 20px #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            color: #000;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HUD del Jugador -->
+    <div class="hud">
+        <div class="player-info">
+            <div style="display: flex; justify-content: space-between;">
+                <b>Tu Vida (HP)</b>
+                <span id="playerHpText">100/100</span>
+            </div>
+            <div class="bar-container">
+                <div class="hp-bar" id="playerHpBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campo de Batalla -->
+    <div class="battlefield" id="battlefield">
+        <div class="monster" id="monster">🐉</div>
+        
+        <div class="monster-stats">
+            <div class="monster-name">Dragón Oscuro</div>
+            <div class="monster-hp-container">
+                <div class="monster-hp-bar" id="monsterHpBar"></div>
+            </div>
+            <div style="font-size: 12px; margin-top: 5px;" id="monsterHpText">HP: 200/200</div>
+        </div>
+
+        <p class="instruction">
+            Imagina que estas 3 cartas de abajo son <br><b>estampitas NFC físicas</b> en tu mesa.
+        </p>
+    </div>
+
+    <!-- Simulación de escanear cartas NFC -->
+    <div class="cards-area">
+        <div class="cards-title">Acerca tu teléfono a una carta... (Haz Clic)</div>
+        <div class="cards-row">
+            
+            <div class="nfc-card fire" onclick="usarCarta('Fuego', 40)">
+                <div class="card-icon">🔥</div>
+                <div class="card-name" style="color: var(--card-fire);">ATAQUE</div>
+            </div>
+
+            <div class="nfc-card heal" onclick="usarCarta('Cura', 30)">
+                <div class="card-icon">💚</div>
+                <div class="card-name" style="color: var(--card-heal);">CURAR</div>
+            </div>
+
+            <div class="nfc-card ice" onclick="usarCarta('Hielo', 25)">
+                <div class="card-icon">❄️</div>
+                <div class="card-name" style="color: var(--card-ice);">MAGIA</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Pantalla de Victoria -->
+    <div class="victory" id="victoryScreen">
+        <h1>¡VICTORIA!</h1>
+        <p>Has derrotado al monstruo.</p>
+        <button class="btn" onclick="reiniciarJuego()">Jugar de nuevo</button>
+    </div>
+
+    <script>
+        // Variables del juego (La "función" o lógica)
+        let monsterHp = 200;
+        let playerHp = 100;
+        const maxMonsterHp = 200;
+        const maxPlayerHp = 100;
+
+        const monsterEl = document.getElementById('monster');
+        const monsterHpBar = document.getElementById('monsterHpBar');
+        const monsterHpText = document.getElementById('monsterHpText');
+        const playerHpBar = document.getElementById('playerHpBar');
+        const playerHpText = document.getElementById('playerHpText');
+        const battlefield = document.getElementById('battlefield');
+
+        // Esta función simula lo que pasa cuando el celular lee el NFC
+        function usarCarta(tipo, valor) {
+            if (monsterHp <= 0) return; // Si ya está muerto no hacer nada
+
+            if (navigator.vibrate) navigator.vibrate(50); // Vibración háptica
+
+            if (tipo === 'Fuego' || tipo === 'Hielo') {
+                // Atacar al monstruo
+                monsterHp -= valor;
+                if (monsterHp < 0) monsterHp = 0;
+                
+                mostrarTextoFlotante(`-${valor}`, tipo === 'Fuego' ? '#ff5e00' : '#00ccff');
+                animarDanioMonstruo();
+                actualizarBarras();
+
+                if (monsterHp === 0) {
+                    setTimeout(() => {
+                        document.getElementById('victoryScreen').classList.add('active');
+                    }, 1000);
+                } else {
+                    // Si el monstruo no muere, contraataca
+                    setTimeout(contraataqueMonstruo, 800);
+                }
+
+            } else if (tipo === 'Cura') {
+                // Curar al jugador
+                playerHp += valor;
+                if (playerHp > maxPlayerHp) playerHp = maxPlayerHp;
+                
+                mostrarTextoFlotante(`+${valor}`, '#00ff88', true);
+                actualizarBarras();
+                setTimeout(contraataqueMonstruo, 800); // El monstruo igual ataca después de que te curas
+            }
+        }
+
+        function contraataqueMonstruo() {
+            if (monsterHp <= 0) return;
+            const danio = 15;
+            playerHp -= danio;
+            if (playerHp < 0) playerHp = 0;
+            
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Vibrar doble por daño
+            
+            mostrarTextoFlotante(`-${danio}`, '#ff0000', true);
+            actualizarBarras();
+
+            // Parpadear pantalla rojo
+            document.body.style.boxShadow = 'inset 0 0 50px red';
+            setTimeout(() => {
+                document.body.style.boxShadow = '0 0 30px rgba(0,0,0,0.8)';
+            }, 200);
+
+            if (playerHp === 0) {
+                alert("¡Has sido derrotado!");
+                reiniciarJuego();
+            }
+        }
+
+        function actualizarBarras() {
+            monsterHpBar.style.width = (monsterHp / maxMonsterHp * 100) + '%';
+            monsterHpText.innerText = `HP: ${monsterHp}/${maxMonsterHp}`;
+            
+            playerHpBar.style.width = (playerHp / maxPlayerHp * 100) + '%';
+            playerHpText.innerText = `${playerHp}/${maxPlayerHp}`;
+        }
+
+        function animarDanioMonstruo() {
+            monsterEl.classList.add('hit');
+            setTimeout(() => {
+                monsterEl.classList.remove('hit');
+            }, 200);
+        }
+
+        function mostrarTextoFlotante(texto, color, esJugador = false) {
+            const num = document.createElement('div');
+            num.className = 'floating-text';
+            num.innerText = texto;
+            num.style.color = color;
+            num.style.textShadow = `0 0 10px ${color}`;
+            
+            // Posicionar sobre el monstruo o sobre el jugador
+            if (esJugador) {
+                num.style.top = '60px';
+                num.style.left = '50%';
+                num.style.transform = 'translateX(-50%)';
+            } else {
+                num.style.top = '30%';
+                num.style.left = '50%';
+                num.style.transform = 'translateX(-50%)';
+            }
+
+            battlefield.appendChild(num);
+
+            setTimeout(() => {
+                num.remove();
+            }, 1000);
+        }
+
+        function reiniciarJuego() {
+            monsterHp = maxMonsterHp;
+            playerHp = maxPlayerHp;
+            actualizarBarras();
+            document.getElementById('victoryScreen').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

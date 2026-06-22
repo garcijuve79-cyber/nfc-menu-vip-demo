@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Menú Interactivo | La Terraza</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --surface: #1e1e1e;
+            --primary: #ff5e00; /* Naranja cálido y apetitoso */
+            --text-light: #ffffff;
+            --text-gray: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            padding-bottom: 80px; /* Espacio para el carrito */
+            position: relative;
+        }
+
+        /* --- CABECERA (HERO) --- */
+        .hero {
+            height: 250px;
+            background: linear-gradient(to bottom, rgba(18,18,18,0.2), var(--bg-dark)), 
+                        url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+        }
+
+        .hero h1 {
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 5px;
+        }
+
+        .hero p {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* --- NAVEGACIÓN Y FILTROS --- */
+        .categories-scroll {
+            display: flex;
+            overflow-x: auto;
+            padding: 15px 20px;
+            gap: 10px;
+            scrollbar-width: none;
+            position: sticky;
+            top: 0;
+            background: var(--bg-dark);
+            z-index: 50;
+            border-bottom: 1px solid #333;
+        }
+        .categories-scroll::-webkit-scrollbar { display: none; }
+
+        .cat-btn {
+            background: var(--surface);
+            color: var(--text-gray);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .cat-btn.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* --- SECCIÓN DEL MENÚ --- */
+        .menu-container {
+            padding: 10px 20px;
+        }
+
+        .category-title {
+            font-size: 20px;
+            margin: 20px 0 15px 0;
+            color: var(--text-light);
+            border-left: 4px solid var(--primary);
+            padding-left: 10px;
+        }
+
+        .menu-item {
+            display: flex;
+            background: var(--surface);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .menu-item:active {
+            transform: scale(0.97);
+        }
+
+        .menu-img {
+            width: 100px;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .menu-info {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .menu-header h3 {
+            font-size: 15px;
+            width: 70%;
+        }
+
+        .price {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .menu-desc {
+            font-size: 11px;
+            color: var(--text-gray);
+            margin-top: 5px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 94, 0, 0.1);
+            color: var(--primary);
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-weight: 700;
+        }
+
+        /* --- MODAL (POP-UP) DEL PRODUCTO --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: var(--surface);
+            border-radius: 25px 25px 0 0;
+            z-index: 101;
+            transition: bottom 0.3s ease-out;
+            padding: 25px 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .bottom-sheet.active { bottom: 0; }
+
+        .sheet-img {
+            width: 100%;
+            height: 220px;
+            border-radius: 15px;
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+
+        .sheet-title { font-size: 22px; margin-bottom: 5px; }
+        .sheet-price { color: var(--primary); font-size: 22px; font-weight: 700; margin-bottom: 15px; }
+        .sheet-desc { color: var(--text-gray); font-size: 14px; line-height: 1.6; margin-bottom: 25px; }
+
+        .btn-add {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* --- BOTÓN FLOTANTE (CARRITO WHATSAPP) --- */
+        .floating-cart {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 440px;
+            background: var(--primary);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(255, 94, 0, 0.4);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero">
+        <h1>La Terraza Grill</h1>
+        <p>Expertos en Cortes & Mixología</p>
+    </div>
+
+    <!-- Filtros Superiores (Scroll horizontal) -->
+    <div class="categories-scroll">
+        <div class="cat-btn active">Recomendados</div>
+        <div class="cat-btn">Hamburguesas</div>
+        <div class="cat-btn">Bebidas</div>
+        <div class="cat-btn">Ver Info & Redes</div>
+    </div>
+
+    <div class="menu-container">
+        
+        <h2 class="category-title">Más Vendidos</h2>
+        
+        <!-- PRODUCTO 1 INTERACTIVO -->
+        <div class="menu-item" onclick="openProduct('Burger Clásica', '$150', '200g de carne de res, queso cheddar fundido, tocino crujiente, vegetales frescos y aderezo secreto de la casa. Incluye porción de papas a la francesa.', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400')">
+            <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=200" alt="Hamburguesa" class="menu-img">
+            <div class="menu-info">
+                <div>
+                    <div class="menu-header">
+                        <h3>Burger Clásica</h3>
+                        <span class="price">$150</span>
+                    </div>
+                    <p class="menu-desc">200g de carne de res, queso cheddar fundido, tocino crujiente y aderezo...</p>
+                </div>
+                <div><span class="badge">Favorito ⭐</span></div>
+            </div>
+        </div>
+
+        <!-- PRODUCTO 2 INTERACTIVO -->
+        <div class="menu-item" onclick="openProduct('Ribeye al Carbón', '$420', 'Corte Premium de 350g asado a la leña, bañado en mantequilla de ajo y finas hierbas. Acompañado de espárragos salteados y puré de papa.', 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&q=80&w=400')">
+            <img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&q=80&w=200" alt="Corte" class="menu-img">
+            <div class="menu-info">
+                <div>
+                    <div class="menu-header">
+                        <h3>Ribeye al Carbón</h3>
+                        <span class="price">$420</span>
+                    </div>
+                    <p class="menu-desc">Corte de 350g asado a la leña, bañado en mantequilla de ajo. Acompañado de...</p>
+                </div>
+                <div><span class="badge">Especialidad 🔥</span></div>
+            </div>
+        </div>
+
+        <h2 class="category-title">Bebidas</h2>
+        
+        <!-- PRODUCTO 3 INTERACTIVO -->
+        <div class="menu-item" onclick="openProduct('Mojito Frutos Rojos', '$90', 'Bebida refrescante preparada con ron blanco, hojas de menta fresca, mix de frutos rojos macerados al momento y un toque de agua mineral.', 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&q=80&w=400')">
+            <img src="https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&q=80&w=200" alt="Bebida" class="menu-img">
+            <div class="menu-info">
+                <div>
+                    <div class="menu-header">
+                        <h3>Mojito Frutos Rojos</h3>
+                        <span class="price">$90</span>
+                    </div>
+                    <p class="menu-desc">Ron blanco, hojas de menta, frutos rojos macerados y un toque de agua mineral.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BOTÓN DE CARRITO (WhatsApp) -->
+    <div class="floating-cart" onclick="sendOrder()">
+        <span id="cartTotal">🛒 Ver Mi Pedido (0)</span>
+        <span>Enviar WhatsApp →</span>
+    </div>
+
+    <!-- MODAL POP-UP (BOTTOM SHEET) -->
+    <div class="modal-overlay" id="overlay" onclick="closeProduct()"></div>
+    <div class="bottom-sheet" id="productSheet">
+        <img src="" alt="Producto" class="sheet-img" id="sheetImg">
+        <h2 class="sheet-title" id="sheetTitle">Nombre</h2>
+        <div class="sheet-price" id="sheetPrice">$0.00</div>
+        <p class="sheet-desc" id="sheetDesc">Descripción detallada</p>
+        <button class="btn-add" onclick="addToCart()">Añadir a mi lista</button>
+    </div>
+
+    <script>
+        let cartCount = 0;
+
+        // Abrir la ventana de detalle del platillo
+        function openProduct(title, price, desc, imgSrc) {
+            document.getElementById('sheetTitle').innerText = title;
+            document.getElementById('sheetPrice').innerText = price;
+            document.getElementById('sheetDesc').innerText = desc;
+            document.getElementById('sheetImg').src = imgSrc;
+            
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('productSheet').classList.add('active');
+        }
+
+        // Cerrar la ventana de detalle
+        function closeProduct() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('productSheet').classList.remove('active');
+        }
+
+        // Añadir al "carrito" estático
+        function addToCart() {
+            if(navigator.vibrate) navigator.vibrate(50);
+            cartCount++;
+            document.getElementById('cartTotal').innerText = `🛒 Ver Mi Pedido (${cartCount})`;
+            closeProduct();
+            
+            // Pequeña animación en el botón
+            const cart = document.querySelector('.floating-cart');
+            cart.style.transform = 'translateX(-50%) scale(1.05)';
+            setTimeout(() => {
+                cart.style.transform = 'translateX(-50%) scale(1)';
+            }, 200);
+        }
+
+        // Simular enviar el pedido por WhatsApp
+        function sendOrder() {
+            if(cartCount === 0) {
+                alert("Selecciona al menos un platillo primero.");
+                return;
+            }
+            alert(`¡Simulación exitosa!\nEsto abrirá el WhatsApp del restaurante diciendo:\n\n"Hola, estoy en la mesa y quiero ordenar ${cartCount} cosas..."`);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Menú Premium - El Buen Sabor</title>
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --surface: #1e222a;
+            --primary: #f8b400; /* Oro elegante */
+            --text-main: #ffffff;
+            --text-muted: #8e95a5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            max-width: 450px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            overflow-x: hidden;
+        }
+
+        /* Cabecera del Restaurante */
+        .header {
+            height: 250px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), var(--bg-color)), 
+                        url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&q=80&w=600');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            position: relative;
+        }
+
+        .restaurant-name {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            margin-bottom: 5px;
+        }
+
+        .restaurant-info {
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Filtros de Menú */
+        .categories {
+            display: flex;
+            overflow-x: auto;
+            padding: 15px 20px;
+            gap: 15px;
+            scrollbar-width: none;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            background: rgba(15, 17, 21, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+
+        .category-chip {
+            background: var(--surface);
+            color: var(--text-muted);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .category-chip.active {
+            background: var(--primary);
+            color: #000;
+        }
+
+        /* Lista de Platillos */
+        .menu-list {
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .menu-item {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .menu-item:active {
+            transform: scale(0.98);
+        }
+
+        .item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .item-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .item-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .item-price {
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .item-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .add-btn {
+            align-self: flex-end;
+            background: rgba(248, 180, 0, 0.1);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Floating Order Button */
+        .order-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: var(--primary);
+            color: #000;
+            padding: 15px 20px;
+            border-radius: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 10px 25px rgba(248, 180, 0, 0.4);
+            cursor: pointer;
+            z-index: 20;
+        }
+
+        .nfc-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="nfc-badge">
+            <span style="color:var(--primary)">⚡</span> Pedido por NFC
+        </div>
+        <div class="restaurant-name">La Terraza Grill</div>
+        <div class="restaurant-info">Abierto hasta las 11:00 PM</div>
+    </div>
+
+    <div class="categories">
+        <div class="category-chip active">Especialidades</div>
+        <div class="category-chip">Bebidas</div>
+        <div class="category-chip">Postres</div>
+        <div class="category-chip">Entradas</div>
+    </div>
+
+    <div class="menu-list">
+        
+        <!-- Item 1 -->
+        <div class="menu-item">
+            <img class="item-image" src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=200" alt="Hamburguesa">
+            <div class="item-details">
+                <div>
+                    <div class="item-header">
+                        <div class="item-title">Burger Trufada</div>
+                        <div class="item-price">$180</div>
+                    </div>
+                    <div class="item-desc">Doble carne Angus, queso brie, mayonesa de trufa negra y cebolla caramelizada.</div>
+                </div>
+                <div class="add-btn">+</div>
+            </div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="menu-item">
+            <img class="item-image" src="https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&q=80&w=200" alt="Corte">
+            <div class="item-details">
+                <div>
+                    <div class="item-header">
+                        <div class="item-title">Ribeye Prime (400g)</div>
+                        <div class="item-price">$450</div>
+                    </div>
+                    <div class="item-desc">A la parrilla con mantequilla de ajo y romero. Acompañado de puré rústico.</div>
+                </div>
+                <div class="add-btn">+</div>
+            </div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="menu-item">
+            <img class="item-image" src="https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&q=80&w=200" alt="Bebida">
+            <div class="item-details">
+                <div>
+                    <div class="item-header">
+                        <div class="item-title">Mojito Frutos Rojos</div>
+                        <div class="item-price">$90</div>
+                    </div>
+                    <div class="item-desc">Ron blanco, menta fresca, zarzamoras maceradas y agua mineral.</div>
+                </div>
+                <div class="add-btn">+</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Botón Flotante -->
+    <div class="order-bar">
+        <div>🛒 Ver Pedido (2)</div>
+        <div>$630.00</div>
+    </div>
+
+    <script>
+        // Pequeña interactividad para la demo
+        const btns = document.querySelectorAll('.add-btn');
+        btns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.innerHTML = '✓';
+                this.style.background = 'var(--primary)';
+                this.style.color = '#000';
+                if(navigator.vibrate) navigator.vibrate(50);
+                setTimeout(() => {
+                    this.innerHTML = '+';
+                    this.style.background = 'rgba(248, 180, 0, 0.1)';
+                    this.style.color = 'var(--primary)';
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+</html>

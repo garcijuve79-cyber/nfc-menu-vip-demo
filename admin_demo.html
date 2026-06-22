@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel de Administración | Sistema</title>
+    <!-- Fuentes modernas -->
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* ESTILO ORIGINAL DEL USUARIO PERO PREMIUM */
+            --bg-app: #050505; /* Negro profundo original */
+            --surface: #121212; /* Tarjetas grises oscuras */
+            --primary: #d3a774; /* Dorado original */
+            --primary-hover: #e8bd8a;
+            --text-dark: #ffffff; /* Texto blanco principal */
+            --text-muted: #9ca3af; /* Texto secundario */
+            --border-color: #2a2a2a; /* Bordes oscuros */
+            --input-bg: #1a1a1a; /* Fondo de inputs oscuro */
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --success: #10b981;
+            --radius-card: 12px;
+            --radius-btn: 8px;
+            --radius-input: 8px;
+            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-app); color: var(--text-dark); -webkit-font-smoothing: antialiased; }
+
+        /* Fuentes especiales */
+        .anton-title { font-family: 'Anton', sans-serif; letter-spacing: 1px; color: var(--primary); }
+
+        /* Contenedor principal */
+        .app-container { max-width: 600px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 100px; }
+
+        /* --- PANTALLA DE LOGIN --- */
+        #loginScreen { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background: var(--bg-app); }
+        .login-box { background: var(--surface); padding: 40px 30px; border-radius: var(--radius-card); box-shadow: var(--shadow-md); border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; }
+        .login-box h1 { font-size: 28px; margin-bottom: 5px; }
+        .login-box p.subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
+        
+        /* Formularios SaaS pero Oscuros */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 8px; }
+        .input-group input[type="text"], .input-group input[type="password"], .input-group input[type="number"], .input-group select, .input-group textarea { 
+            width: 100%; padding: 12px 14px; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-dark); 
+            border-radius: var(--radius-input); font-size: 15px; transition: all 0.2s ease;
+        }
+        .input-group textarea { resize: vertical; min-height: 80px; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(211, 167, 116, 0.2); }
+
+        .btn-primary { width: 100%; padding: 14px; border: none; background: var(--primary); color: #000; font-size: 16px; font-weight: 700; border-radius: var(--radius-btn); cursor: pointer; transition: all 0.2s ease; }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(211, 167, 116, 0.3); }
+        .btn-primary:active { transform: translateY(0); }
+        .error-msg { color: var(--danger); font-size: 13px; font-weight: 500; margin-top: 15px; display: none; background: var(--danger-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--danger); }
+
+        /* --- DASHBOARD --- */
+        #dashboardScreen { display: none; }
+        
+        /* Header Superior Fijo */
+        .top-navbar { background: var(--bg-app); padding: 20px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+        .top-navbar h2 { font-size: 24px; margin: 0; }
+        .logout-btn { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .logout-btn:hover { background: var(--border-color); color: white; }
+
+        .dashboard-content { padding: 0 20px; }
+
+        /* Tarjeta de Configuración */
+        .config-card { background: var(--surface); padding: 20px; border-radius: var(--radius-card); border: 1px solid var(--border-color); margin-bottom: 25px; box-shadow: var(--shadow-sm); }
+        .config-card h3 { font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px;}
+
+        /* Botón de Agregar Nuevo */
+        .btn-add-new { 
+            width: 100%; padding: 15px; background: transparent; color: var(--primary); border: 1px dashed var(--primary); 
+            border-radius: var(--radius-card); font-size: 14px; font-weight: 600; letter-spacing: 1px; cursor: pointer; margin-bottom: 30px; transition: all 0.2s ease; 
+        }
+        .btn-add-new:hover { background: rgba(211, 167, 116, 0.1); }
+
+        /* --- TARJETAS DE PRODUCTOS --- */
+        .menu-item-edit { 
+            background: var(--surface); padding: 20px; border-radius: var(--radius-card); box-shadow: var(--shadow-sm); 
+            border: 1px solid var(--border-color); margin-bottom: 25px; position: relative; transition: border-color 0.2s ease;
+        }
+        .menu-item-edit:hover { border-color: rgba(211, 167, 116, 0.4); }
+        
+        /* Estado Agotado Visual */
+        .menu-item-edit.is-soldout { border: 1px solid var(--danger); opacity: 0.6; }
+
+        .btn-delete { 
+            position: absolute; top: 15px; right: 15px; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); 
+            border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; 
+        }
+        .btn-delete:hover { background: var(--danger); color: white; }
+
+        /* Layout de la Tarjeta */
+        .card-header-flex { display: flex; gap: 15px; margin-bottom: 20px; margin-top: 10px; align-items: flex-start; }
+        .edit-img-preview { width: 90px; height: 90px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border-color); flex-shrink: 0; }
+        
+        .photo-list-container { flex: 1; background: var(--input-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color); }
+        .photo-list-container label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; margin-bottom: 10px; display: block; }
+        
+        .photo-input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .photo-input-row input { margin: 0 !important; font-size: 13px !important; padding: 10px !important; }
+        .btn-remove-photo { background: transparent; color: var(--danger); border: 1px solid var(--danger); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-remove-photo:hover { background: var(--danger); color: white; }
+        
+        .btn-add-photo { width: 100%; background: transparent; color: var(--text-muted); border: 1px dashed var(--border-color); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+        .btn-add-photo:hover { border-color: var(--primary); color: var(--primary); }
+
+        .flex-row-inputs { display: flex; gap: 15px; }
+        .flex-row-inputs .input-group { flex: 1; margin-bottom: 15px; }
+
+        /* Controles Inferiores (Checkbox) */
+        .bottom-controls { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color); }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .checkbox-group label { color: var(--danger); font-weight: 600; font-size: 13px; cursor: pointer; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;}
+        .checkbox-group input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--danger); }
+
+        /* BOTÓN FLOTANTE GUARDAR */
+        .floating-save-wrapper { position: fixed; bottom: 20px; left: 0; width: 100%; display: none; justify-content: center; pointer-events: none; z-index: 100; }
+        .floating-save { 
+            pointer-events: auto; width: 90%; max-width: 400px; background: var(--primary); color: #000; padding: 16px; border: none; 
+            font-size: 15px; font-weight: 800; letter-spacing: 1px; border-radius: 50px; cursor: pointer; box-shadow: 0 8px 16px rgba(211, 167, 116, 0.4); 
+            animation: bounceInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); transition: transform 0.2s; text-transform: uppercase;
+        }
+        .floating-save:hover { transform: scale(1.02); }
+        .floating-save:active { transform: scale(0.98); }
+
+        @keyframes bounceInUp { from { opacity: 0; transform: translateY(100px); } to { opacity: 1; transform: translateY(0); } }
+
+        .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: 700; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen">
+        <div class="login-box">
+            <h1 class="anton-title">RESTAURANT ADMIN</h1>
+            <p class="subtitle">Accede para configurar tu menú</p>
+            <div class="input-group"><label>Usuario</label><input type="text" id="username" placeholder="admin" value="admin"></div>
+            <div class="input-group"><label>Contraseña</label><input type="password" id="password" placeholder="••••" value="1234"></div>
+            <button class="btn-primary" onclick="login()">Ingresar al Sistema</button>
+            <div class="error-msg" id="errorMsg">Usuario o contraseña incorrectos.</div>
+        </div>
+    </div>
+
+    <div id="dashboardScreen" class="app-container">
+        
+        <div class="top-navbar">
+            <h2 class="anton-title">Tus Platillos</h2>
+            <button class="logout-btn" onclick="logout()">Salir</button>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="config-card">
+                <h3>⚙️ Configuración del Negocio</h3>
+                <div class="input-group">
+                    <label>Número WhatsApp para Pedidos</label>
+                    <input type="text" id="globalWhatsapp" placeholder="Ej. 528181234567" oninput="markChanged()">
+                </div>
+                <div class="input-group">
+                    <label>Instagram (URL)</label>
+                    <input type="text" id="globalIg" placeholder="Ej. https://instagram.com/tacos" oninput="markChanged()">
+                </div>
+                <div class="input-group">
+                    <label>Facebook (URL)</label>
+                    <input type="text" id="globalFb" placeholder="Ej. https://facebook.com/tacos" oninput="markChanged()">
+                </div>
+                <div class="input-group">
+                    <label>TikTok (URL)</label>
+                    <input type="text" id="globalTk" placeholder="Ej. https://tiktok.com/@tacos" oninput="markChanged()">
+                </div>
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>YouTube (URL)</label>
+                    <input type="text" id="globalYt" placeholder="Ej. https://youtube.com/@tacos" oninput="markChanged()">
+                </div>
+            </div>
+
+            <button class="btn-add-new" onclick="addNewItem()">+ AGREGAR NUEVO PLATILLO</button>
+            
+            <div id="editorContainer"></div>
+        </div>
+        
+        <div class="floating-save-wrapper" id="saveWrapper">
+            <button class="floating-save" id="saveBtn" onclick="saveChanges()">✅ GUARDAR CAMBIOS</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toastMsg">Cambios Guardados Exitosamente</div>
+
+    <script>
+        // Los mismos datos predeterminados
+        const defaultMenu = [
+            // Platillos Principales
+            { id: 'item1', title: 'Tacos de Birria (Orden)', price: 17.80, desc: 'Nuestros famosos tacos bañados en su jugo, receta original.', images: ['https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '¡MÁS VENDIDO!', promoDay: '', category: 'Platillos' },
+            { id: 'item2', title: 'Tostada Ceviche', price: 15.50, desc: 'Fresco ceviche de pescado curtido al limón con aguacate.', images: ['https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Platillos' },
+            { id: 'item3', title: 'Tacos al Pastor (x3)', price: 16.00, desc: 'Clásico trompo adobado con nuestra salsa secreta.', images: ['https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: 'Lunes', category: 'Platillos' },
+            { id: 'item4', title: 'Torta Cubana', price: 25.00, desc: 'Gigante torta con milanesa, pierna, salchicha, queso y huevo.', images: ['https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: 'GIGANTE', promoDay: '', category: 'Platillos' },
+            { id: 'item5', title: 'Quesabirria con Consomé', price: 22.00, desc: 'Costra de queso crujiente, carne de birria y consomé.', images: ['https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Platillos' },
+            { id: 'item6', title: 'Nachos con Arrachera', price: 19.50, desc: 'Totopos bañados en queso fundido, frijoles y arrachera asada.', images: ['https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: 'COMPARTIR', promoDay: '', category: 'Platillos' },
+            { id: 'item7', title: 'Burrito Norteño', price: 18.00, desc: 'Tortilla de harina con machaca, frijoles puercos y queso.', images: ['https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Platillos' },
+            { id: 'item8', title: 'Enchiladas Suizas', price: 21.00, desc: 'Pollo desmenuzado, salsa verde cremosa y queso gratinado.', images: ['https://images.unsplash.com/photo-1534352956036-cd81e27dd615?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Platillos' },
+            { id: 'item9', title: 'Tacos de Camarón (x3)', price: 24.00, desc: 'Camarón capeado con col morada y aderezo chipotle.', images: ['https://images.unsplash.com/photo-1604544717150-f8d9510dd169?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: 'NUEVO', promoDay: 'Viernes', category: 'Platillos' },
+            { id: 'item10', title: 'Sopa Azteca', price: 12.00, desc: 'Sopa de tortilla con chile pasilla, aguacate y queso panela.', images: ['https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Platillos' },
+            
+            // Bebidas y Refrescos
+            { id: 'item11', title: 'Coca-Cola (600ml)', price: 5.00, desc: 'Refresco de cola bien frío.', images: ['https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Bebidas' },
+            { id: 'item12', title: 'Agua de Horchata (1 L)', price: 8.00, desc: 'Receta casera, muy cremosa y refrescante con canela.', images: ['https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: 'CASERA', promoDay: '', category: 'Bebidas' },
+            { id: 'item13', title: 'Agua de Jamaica (1 L)', price: 8.00, desc: 'Fresca agua de flor de jamaica, perfecta para acompañar.', images: ['https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Bebidas' },
+            { id: 'item14', title: 'Cerveza Modelo Especial', price: 9.00, desc: 'Cerveza clara bien fría, ideal para el calor.', images: ['https://images.unsplash.com/photo-1605809712534-71f65d1d6438?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Bebidas' },
+            { id: 'item15', title: 'Cerveza Victoria', price: 9.00, desc: 'Cerveza estilo Vienna, sabor inconfundible.', images: ['https://images.unsplash.com/photo-1575037614876-c38556865f39?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Bebidas' },
+            { id: 'item16', title: 'Limonada Mineral', price: 7.50, desc: 'Limón recién exprimido, agua mineral y un toque de sal.', images: ['https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Bebidas' },
+            
+            // Postres y Extras
+            { id: 'item17', title: 'Flan Napolitano', price: 10.00, desc: 'Postre casero con caramelo suave y textura cremosa.', images: ['https://images.unsplash.com/photo-1598215439218-f77afff14a82?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: 'POSTRE', promoDay: '', category: 'Postres' },
+            { id: 'item18', title: 'Churros con Chocolate', price: 14.00, desc: 'Orden de 3 churros rellenos de cajeta con canela.', images: ['https://images.unsplash.com/photo-1624371414325-e2f6b472e35b?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Postres' },
+            { id: 'item19', title: 'Pastel de Tres Leches', price: 15.00, desc: 'Porción individual de pastel tradicional muy jugoso.', images: ['https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: '', promoDay: '', category: 'Postres' },
+            { id: 'item20', title: 'Guacamole Extra', price: 6.00, desc: 'Porción extra de nuestro guacamole fresco preparado al momento.', images: ['https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&q=80&w=200'], soldOut: false, badge: 'EXTRA', promoDay: '', category: 'Extras' }
+        ];
+
+        let currentMenuData = [];
+        let currentConfig = { whatsapp: "" };
+
+        function loadData() {
+            const savedData = localStorage.getItem('miMenuDataV3');
+            if (savedData) { 
+                let parsed = JSON.parse(savedData);
+                parsed = parsed.map(item => {
+                    if(!item.images) {
+                        if(item.img && typeof item.img === 'string') { item.images = item.img.split(',').map(s => s.trim()).filter(s => s !== ""); } else { item.images = []; }
+                    }
+                    if(item.images.length === 0) item.images.push(""); 
+                    if(item.badge === undefined) item.badge = ""; 
+                    if(item.promoDay === undefined) item.promoDay = ""; 
+                    if(!item.category) item.category = "Platillos";
+                    return item;
+                });
+                currentMenuData = parsed;
+            } else { 
+                currentMenuData = JSON.parse(JSON.stringify(defaultMenu)); 
+                localStorage.setItem('miMenuDataV3', JSON.stringify(currentMenuData)); 
+            }
+            const savedConfig = localStorage.getItem('miMenuConfig');
+            if(savedConfig) { currentConfig = JSON.parse(savedConfig); }
+            document.getElementById('globalWhatsapp').value = currentConfig.whatsapp || "";
+            document.getElementById('globalIg').value = currentConfig.ig || "";
+            document.getElementById('globalFb').value = currentConfig.fb || "";
+            document.getElementById('globalTk').value = currentConfig.tk || "";
+            document.getElementById('globalYt').value = currentConfig.yt || "";
+        }
+
+        function login() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if(u === 'admin' && p === '1234') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboardScreen').style.display = 'block';
+                loadData(); renderEditor();
+            } else { document.getElementById('errorMsg').style.display = 'block'; }
+        }
+
+        function logout() {
+            document.getElementById('dashboardScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        function renderEditor() {
+            const container = document.getElementById('editorContainer');
+            container.innerHTML = '';
+
+            currentMenuData.forEach((item, itemIndex) => {
+                const isSoldOut = item.soldOut ? "checked" : "";
+                const cardClass = item.soldOut ? "menu-item-edit is-soldout" : "menu-item-edit";
+                const firstImg = (item.images && item.images.length > 0 && item.images[0]) ? item.images[0] : 'https://via.placeholder.com/200?text=Sin+Foto';
+
+                let galleryHTML = '';
+                item.images.forEach((url, photoIndex) => {
+                    const removeBtn = photoIndex > 0 ? `<button class="btn-remove-photo" onclick="removePhoto(${itemIndex}, ${photoIndex})" title="Eliminar foto">✕</button>` : `<div style="width:32px;"></div>`; 
+                    galleryHTML += `
+                        <div class="photo-input-row">
+                            <input type="text" class="input-group" value="${url}" placeholder="https://..." oninput="updatePhotoData(this, ${itemIndex}, ${photoIndex}); markChanged()">
+                            ${removeBtn}
+                        </div>
+                    `;
+                });
+
+                const days = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+                let optionsHTML = days.map(d => `<option value="${d}" ${item.promoDay === d ? "selected" : ""}>${d === "" ? "Ninguno" : d}</option>`).join('');
+
+                const html = `
+                <div class="${cardClass}" id="card_${itemIndex}">
+                    <button class="btn-delete" onclick="deleteItem(${itemIndex})">🗑 Eliminar Platillo</button>
+                    
+                    <div class="card-header-flex">
+                        <img src="${firstImg}" class="edit-img-preview" id="preview_${itemIndex}">
+                        <div class="photo-list-container">
+                            <label>📸 Galería de Fotos (URL)</label>
+                            <div id="gallery_container_${itemIndex}">${galleryHTML}</div>
+                            <button class="btn-add-photo" onclick="addPhoto(${itemIndex})">+ AÑADIR OTRA FOTO</button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Nombre del Platillo</label>
+                        <input type="text" value="${item.title}" placeholder="Ej. Tacos de Birria" oninput="markChanged()" id="title_${itemIndex}">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Descripción Corta (Marketing)</label>
+                        <textarea placeholder="Ej. Nuestro platillo estrella con un toque adobado..." oninput="markChanged()" id="desc_${itemIndex}">${item.desc || ''}</textarea>
+                    </div>
+                    
+                    <div class="flex-row-inputs">
+                        <div class="input-group">
+                            <label>Precio ($)</label>
+                            <input type="number" step="0.01" value="${item.price}" oninput="markChanged()" id="price_${itemIndex}">
+                        </div>
+                        <div class="input-group">
+                            <label style="color:var(--primary);">🔥 Etiqueta Libre</label>
+                            <input type="text" value="${item.badge || ''}" placeholder="Ej. ¡MÁS VENDIDO!" oninput="markChanged()" id="badge_${itemIndex}">
+                        </div>
+                    </div>
+
+                    <div class="flex-row-inputs">
+                        <div class="input-group">
+                            <label>📂 Categoría</label>
+                            <select id="category_${itemIndex}" onchange="markChanged()">
+                                <option value="Platillos" ${item.category === 'Platillos' ? 'selected' : ''}>🍽️ Platillos</option>
+                                <option value="Bebidas" ${item.category === 'Bebidas' ? 'selected' : ''}>🥤 Bebidas</option>
+                                <option value="Postres" ${item.category === 'Postres' ? 'selected' : ''}>🍰 Postres</option>
+                                <option value="Extras" ${item.category === 'Extras' ? 'selected' : ''}>🥑 Extras</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label style="color:var(--primary);">📅 Promoción en Día</label>
+                            <select id="promoDay_${itemIndex}" onchange="markChanged()">
+                                ${optionsHTML}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Promo day selector has been moved to flex row -->
+                        <label class="checkbox-group">
+                            <input type="checkbox" id="soldout_${itemIndex}" onchange="markChanged(); toggleCardStyle(${itemIndex})" ${isSoldOut}>
+                            <span>❌ Marcar como Agotado</span>
+                        </label>
+                    </div>
+                </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function updatePhotoData(inputEl, itemIndex, photoIndex) {
+            currentMenuData[itemIndex].images[photoIndex] = inputEl.value;
+            if(photoIndex === 0) {
+                const preview = document.getElementById(`preview_${itemIndex}`);
+                preview.src = inputEl.value || 'https://via.placeholder.com/200?text=Sin+Foto';
+            }
+        }
+
+        function addPhoto(itemIndex) { saveTextStateToMemory(); currentMenuData[itemIndex].images.push(""); renderEditor(); markChanged(); }
+        function removePhoto(itemIndex, photoIndex) { saveTextStateToMemory(); currentMenuData[itemIndex].images.splice(photoIndex, 1); renderEditor(); markChanged(); }
+
+        function saveTextStateToMemory() {
+             currentMenuData.forEach((item, index) => {
+                const titleEl = document.getElementById(`title_${index}`); const priceEl = document.getElementById(`price_${index}`); const badgeEl = document.getElementById(`badge_${index}`); const promoDayEl = document.getElementById(`promoDay_${index}`); const descEl = document.getElementById(`desc_${index}`); const catEl = document.getElementById(`category_${index}`);
+                if(titleEl) item.title = titleEl.value; if(priceEl) item.price = parseFloat(priceEl.value); if(badgeEl) item.badge = badgeEl.value; if(promoDayEl) item.promoDay = promoDayEl.value; if(descEl) item.desc = descEl.value; if(catEl) item.category = catEl.value;
+            });
+        }
+
+        function toggleCardStyle(index) {
+            const isChecked = document.getElementById(`soldout_${index}`).checked;
+            const card = document.getElementById(`card_${index}`);
+            if(isChecked) { card.classList.add("is-soldout"); } else { card.classList.remove("is-soldout"); }
+        }
+
+        function addNewItem() {
+            saveTextStateToMemory();
+            currentMenuData.unshift({ id: 'new_' + Date.now(), title: '', price: 0.00, desc: '', images: [""], soldOut: false, badge: '', promoDay: '', category: 'Platillos' });
+            renderEditor(); markChanged(); window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function deleteItem(index) { if(confirm("¿Estás seguro de que quieres eliminar este platillo permanentemente?")) { currentMenuData.splice(index, 1); renderEditor(); markChanged(); } }
+
+        function markChanged() { document.getElementById('saveWrapper').style.display = 'flex'; }
+
+        function saveChanges() {
+            saveTextStateToMemory(); 
+            currentConfig.whatsapp = document.getElementById('globalWhatsapp').value;
+            currentConfig.ig = document.getElementById('globalIg').value;
+            currentConfig.fb = document.getElementById('globalFb').value;
+            currentConfig.tk = document.getElementById('globalTk').value;
+            currentConfig.yt = document.getElementById('globalYt').value;
+            localStorage.setItem('miMenuConfig', JSON.stringify(currentConfig));
+
+            currentMenuData.forEach((item, index) => {
+                item.soldOut = document.getElementById(`soldout_${index}`).checked;
+                const cleanImages = item.images.filter(url => url.trim() !== "");
+                if(cleanImages.length === 0) cleanImages.push(""); item.images = cleanImages;
+            });
+
+            localStorage.setItem('miMenuDataV3', JSON.stringify(currentMenuData));
+            
+            document.getElementById('saveWrapper').style.display = 'none';
+            const toast = document.getElementById('toastMsg'); toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+            renderEditor(); 
+        }
+    </script>
+</body>
+</html>
