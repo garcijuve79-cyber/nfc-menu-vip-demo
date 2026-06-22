@@ -246,7 +246,14 @@
 
         <div id="waCashContainer" style="margin-bottom:15px; text-align:left;">
             <label style="color:var(--text-muted); font-size:13px;">¿Con cuánto pagas? (Para llevar cambio exacto):</label>
-            <input type="number" id="waCashAmount" placeholder="Ej. 200" style="width:100%; padding:10px; background:#111; color:white; border:1px solid #333; border-radius:5px; margin-top:5px;">
+            <input type="number" id="waCashAmount" placeholder="Ej. 200" style="width:100%; padding:10px; background:#111; color:white; border:1px solid #333; border-radius:5px; margin-top:5px;" oninput="document.getElementById('waCashError').style.display='none'">
+            <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                <button class="btn-action outline" style="flex:1; padding:5px; font-size:13px; border-radius:5px;" onclick="setCashExact()">Exacto</button>
+                <button class="btn-action outline" style="flex:1; padding:5px; font-size:13px; border-radius:5px;" onclick="setCash(100)">$100</button>
+                <button class="btn-action outline" style="flex:1; padding:5px; font-size:13px; border-radius:5px;" onclick="setCash(200)">$200</button>
+                <button class="btn-action outline" style="flex:1; padding:5px; font-size:13px; border-radius:5px;" onclick="setCash(500)">$500</button>
+            </div>
+            <p id="waCashError" style="color:#ff4d4d; font-size:12px; margin-top:5px; display:none;">El monto no puede ser menor al total.</p>
         </div>
 
         <div style="margin-bottom:20px; text-align:left;">
@@ -528,7 +535,11 @@
         function toggleWaCash() {
             const method = document.getElementById('waPaymentMethod').value;
             document.getElementById('waCashContainer').style.display = method === 'Efectivo' ? 'block' : 'none';
+            document.getElementById('waCashError').style.display = 'none';
         }
+
+        function setCashExact() { document.getElementById('waCashAmount').value = total.toFixed(2); document.getElementById('waCashError').style.display = 'none'; }
+        function setCash(amount) { document.getElementById('waCashAmount').value = amount; document.getElementById('waCashError').style.display = 'none'; }
 
         function getGroupedCart() {
             let orderCounts = {}; let orderPrices = {};
@@ -560,6 +571,15 @@
             const method = document.getElementById('waPaymentMethod').value;
             const cash = document.getElementById('waCashAmount').value;
             const address = document.getElementById('waAddress').value;
+
+            if (method === 'Efectivo') {
+                const cashVal = parseFloat(cash);
+                if (isNaN(cashVal) || cashVal < total) {
+                    document.getElementById('waCashError').innerText = "❌ El monto debe ser de al menos $" + total.toFixed(2);
+                    document.getElementById('waCashError').style.display = 'block';
+                    return; 
+                }
+            }
 
             closeModals(); document.getElementById('mainAppView').style.display = 'none';
             
