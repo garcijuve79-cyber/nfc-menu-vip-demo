@@ -608,8 +608,8 @@
             document.getElementById('statusSubtitle').innerText = "Se abrirá tu WhatsApp para enviar la orden."; document.getElementById('statusIcon').innerText = "💬";
             
             const phone = globalConfig.whatsapp ? globalConfig.whatsapp.replace(/\D/g,'') : ''; 
-            if(phone.length > 5) { setTimeout(() => { window.open(`https://wa.me/${phone}?text=${waText}`, '_blank'); }, 1000);
-            } else { document.getElementById('statusSubtitle').innerText = " (Aviso: El dueño no ha configurado su número)"; }
+            const waUrl = phone.length > 5 ? `https://wa.me/${phone}?text=${waText}` : `https://wa.me/?text=${waText}`;
+            setTimeout(() => { window.open(waUrl, '_blank'); }, 1000);
             
             showUpsell();
         }
