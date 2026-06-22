@@ -584,31 +584,32 @@
             closeModals(); document.getElementById('mainAppView').style.display = 'none';
             
             let ticketHTML = ""; 
-            let waText = "Hola! Quiero hacer un pedido a domicilio. Mis platillos son:%0A%0A";
+            let waText = "Hola! Quiero hacer un pedido a domicilio. Mis platillos son:\n\n";
             
             const grouped = getGroupedCart();
             for(let title in grouped.counts) {
                 let qty = grouped.counts[title];
                 ticketHTML += `<div class="cart-item"><span>${qty}x ${title}</span><span>$${(grouped.prices[title]*qty).toFixed(2)}</span></div>`;
-                waText += `👉 ${qty} orden(es) de ${title}%0A`;
+                waText += `👉 ${qty} orden(es) de ${title}\n`;
             }
 
-            waText += `%0A💰 *TOTAL A PAGAR: $${total.toFixed(2)}*%0A`;
-            waText += `%0A💳 *Método de pago:* ${method}`;
+            waText += `\n💰 *TOTAL A PAGAR: $${total.toFixed(2)}*\n`;
+            waText += `\n💳 *Método de pago:* ${method}`;
             if(method === 'Efectivo' && cash) {
-                waText += `%0A💵 *Pago con:* $${cash}`;
+                waText += `\n💵 *Pago con:* $${cash}`;
                 let cambio = parseFloat(cash) - total;
                 if(cambio > 0) { waText += ` (Traer cambio de $${cambio.toFixed(2)})`; }
             }
-            if(address) { waText += `%0A📍 *Dirección de envío:* ${address}`; }
-            waText += `%0A%0A_📱 Armé mi orden desde el menú digital_`;
+            if(address) { waText += `\n📍 *Dirección de envío:* ${address}`; }
+            waText += `\n\n_📱 Armé mi orden desde el menú digital_`;
 
             document.getElementById('statusTicketList').innerHTML = ticketHTML; document.getElementById('statusTotalPrice').innerText = `$${total.toFixed(2)}`;
             document.getElementById('statusTitle').innerText = "¡PREPARANDO WHATSAPP!";
             document.getElementById('statusSubtitle').innerText = "Se abrirá tu WhatsApp para enviar la orden."; document.getElementById('statusIcon').innerText = "💬";
             
             const phone = globalConfig.whatsapp ? globalConfig.whatsapp.replace(/\D/g,'') : ''; 
-            const waUrl = phone.length > 5 ? `https://wa.me/${phone}?text=${waText}` : `https://wa.me/?text=${waText}`;
+            const encodedText = encodeURIComponent(waText);
+            const waUrl = phone.length > 5 ? `https://wa.me/${phone}?text=${encodedText}` : `https://wa.me/?text=${encodedText}`;
             setTimeout(() => { window.open(waUrl, '_blank'); }, 1000);
             
             showUpsell();
