@@ -228,7 +228,34 @@
             <span id="cartTotalPrice">$0.00</span>
         </div>
         <button class="btn-action" onclick="checkout('mesa')">🍽️ ORDENAR PARA MI MESA</button>
-        <button class="btn-action outline" onclick="checkout('domicilio')">🛵 PEDIR A DOMICILIO (WHATSAPP)</button>
+        <button class="btn-action outline" onclick="openWaCheckout()">🛵 PEDIR A DOMICILIO (WHATSAPP)</button>
+    </div>
+
+    <!-- MODAL DE DETALLES PARA WHATSAPP -->
+    <div class="bottom-sheet" id="checkoutWaModal">
+        <h2 style="font-family:'Oswald', sans-serif; color:var(--gold); font-size:24px; margin-bottom:15px;">DATOS DE ENTREGA</h2>
+        
+        <div style="margin-bottom:15px; text-align:left;">
+            <label style="color:var(--text-muted); font-size:13px;">Método de Pago:</label>
+            <select id="waPaymentMethod" onchange="toggleWaCash()" style="width:100%; padding:10px; background:#111; color:white; border:1px solid #333; border-radius:5px; margin-top:5px;">
+                <option value="Efectivo">💵 Efectivo</option>
+                <option value="Transferencia">📱 Transferencia</option>
+                <option value="Tarjeta">💳 Tarjeta (Llevar terminal)</option>
+            </select>
+        </div>
+
+        <div id="waCashContainer" style="margin-bottom:15px; text-align:left;">
+            <label style="color:var(--text-muted); font-size:13px;">¿Con cuánto pagas? (Para llevar cambio exacto):</label>
+            <input type="number" id="waCashAmount" placeholder="Ej. 200" style="width:100%; padding:10px; background:#111; color:white; border:1px solid #333; border-radius:5px; margin-top:5px;">
+        </div>
+
+        <div style="margin-bottom:20px; text-align:left;">
+            <label style="color:var(--text-muted); font-size:13px;">Dirección de Envío:</label>
+            <textarea id="waAddress" placeholder="Ej. Calle Pino Suárez #123, Col. Centro" style="width:100%; padding:10px; background:#111; color:white; border:1px solid #333; border-radius:5px; resize:none; margin-top:5px;" rows="2"></textarea>
+        </div>
+
+        <button class="btn-action" onclick="checkoutWhatsApp()">✅ CONTINUAR A WHATSAPP</button>
+        <button class="btn-action outline" onclick="closeModals()">CANCELAR</button>
     </div>
 
     <script>
@@ -420,6 +447,7 @@
             document.getElementById('overlay').classList.remove('active');
             document.getElementById('productModal').classList.remove('active');
             document.getElementById('cartModal').classList.remove('active');
+            document.getElementById('checkoutWaModal').classList.remove('active');
         }
 
         // --- SISTEMA DE CARRUSEL ---
@@ -479,33 +507,93 @@
 
         function openCartModal() {
             if(cart.length === 0) return; let listHTML = "";
-            cart.forEach(item => { listHTML += `<div class="cart-item"><span>1x ${item.title}</span><span>$${item.price.toFixed(2)}</span></div>`; });
+            let orderCounts = {}; let orderPrices = {};
+            cart.forEach(item => {
+                if(!orderCounts[item.title]) { orderCounts[item.title] = 0; orderPrices[item.title] = item.price; }
+                orderCounts[item.title]++;
+            });
+            for(let title in orderCounts) {
+                let qty = orderCounts[title];
+                listHTML += `<div class="cart-item"><span>${qty}x ${title}</span><span>$${(orderPrices[title]*qty).toFixed(2)}</span></div>`;
+            }
             document.getElementById('cartItemsList').innerHTML = listHTML; document.getElementById('cartTotalPrice').innerText = `$${total.toFixed(2)}`;
             document.getElementById('overlay').classList.add('active'); document.getElementById('cartModal').classList.add('active');
         }
 
+        function openWaCheckout() {
+            document.getElementById('cartModal').classList.remove('active');
+            document.getElementById('checkoutWaModal').classList.add('active');
+        }
+
+        function toggleWaCash() {
+            const method = document.getElementById('waPaymentMethod').value;
+            document.getElementById('waCashContainer').style.display = method === 'Efectivo' ? 'block' : 'none';
+        }
+
+        function getGroupedCart() {
+            let orderCounts = {}; let orderPrices = {};
+            cart.forEach(item => {
+                if(!orderCounts[item.title]) { orderCounts[item.title] = 0; orderPrices[item.title] = item.price; }
+                orderCounts[item.title]++;
+            });
+            return { counts: orderCounts, prices: orderPrices };
+        }
+
         function checkout(type) {
             closeModals(); document.getElementById('mainAppView').style.display = 'none';
-            let ticketHTML = ""; let waText = "Hola, quiero hacer este pedido a domicilio:%0A%0A";
-            cart.forEach(item => {
-                ticketHTML += `<div class="cart-item"><span>1x ${item.title}</span><span>$${item.price.toFixed(2)}</span></div>`;
-                waText += `- 1x ${item.title} ($${item.price})%0A`;
-            });
-            waText += `%0A*TOTAL: $${total.toFixed(2)}*%0A%0AGracias.`;
+            let ticketHTML = ""; 
+            
+            const grouped = getGroupedCart();
+            for(let title in grouped.counts) {
+                let qty = grouped.counts[title];
+                ticketHTML += `<div class="cart-item"><span>${qty}x ${title}</span><span>$${(grouped.prices[title]*qty).toFixed(2)}</span></div>`;
+            }
 
             document.getElementById('statusTicketList').innerHTML = ticketHTML; document.getElementById('statusTotalPrice').innerText = `$${total.toFixed(2)}`;
-
-            if(type === 'domicilio') {
-                document.getElementById('statusTitle').innerText = "¡PREPARANDO WHATSAPP!";
-                document.getElementById('statusSubtitle').innerText = "Se abrirá tu WhatsApp para enviar la orden."; document.getElementById('statusIcon').innerText = "💬";
-                const phone = globalConfig.whatsapp ? globalConfig.whatsapp.replace(/\D/g,'') : ''; 
-                if(phone.length > 5) { setTimeout(() => { window.open(`https://wa.me/${phone}?text=${waText}`, '_blank'); }, 1000);
-                } else { document.getElementById('statusSubtitle').innerText = " (Aviso: El dueño no ha configurado su número)"; }
-            } else {
-                document.getElementById('statusTitle').innerText = "¡PEDIDO EN COCINA!";
-                document.getElementById('statusSubtitle').innerText = "Toma asiento, en breve te atenderemos."; document.getElementById('statusIcon').innerText = "✓";
-            }
+            document.getElementById('statusTitle').innerText = "¡PEDIDO EN COCINA!";
+            document.getElementById('statusSubtitle').innerText = "Toma asiento, en breve te atenderemos."; document.getElementById('statusIcon').innerText = "✓";
             
+            showUpsell();
+        }
+
+        function checkoutWhatsApp() {
+            const method = document.getElementById('waPaymentMethod').value;
+            const cash = document.getElementById('waCashAmount').value;
+            const address = document.getElementById('waAddress').value;
+
+            closeModals(); document.getElementById('mainAppView').style.display = 'none';
+            
+            let ticketHTML = ""; 
+            let waText = "Hola! Quiero hacer un pedido a domicilio. Mis platillos son:%0A%0A";
+            
+            const grouped = getGroupedCart();
+            for(let title in grouped.counts) {
+                let qty = grouped.counts[title];
+                ticketHTML += `<div class="cart-item"><span>${qty}x ${title}</span><span>$${(grouped.prices[title]*qty).toFixed(2)}</span></div>`;
+                waText += `👉 ${qty} orden(es) de ${title}%0A`;
+            }
+
+            waText += `%0A💰 *TOTAL A PAGAR: $${total.toFixed(2)}*%0A`;
+            waText += `%0A💳 *Método de pago:* ${method}`;
+            if(method === 'Efectivo' && cash) {
+                waText += `%0A💵 *Pago con:* $${cash}`;
+                let cambio = parseFloat(cash) - total;
+                if(cambio > 0) { waText += ` (Traer cambio de $${cambio.toFixed(2)})`; }
+            }
+            if(address) { waText += `%0A📍 *Dirección de envío:* ${address}`; }
+            waText += `%0A%0AMuchas gracias.`;
+
+            document.getElementById('statusTicketList').innerHTML = ticketHTML; document.getElementById('statusTotalPrice').innerText = `$${total.toFixed(2)}`;
+            document.getElementById('statusTitle').innerText = "¡PREPARANDO WHATSAPP!";
+            document.getElementById('statusSubtitle').innerText = "Se abrirá tu WhatsApp para enviar la orden."; document.getElementById('statusIcon').innerText = "💬";
+            
+            const phone = globalConfig.whatsapp ? globalConfig.whatsapp.replace(/\D/g,'') : ''; 
+            if(phone.length > 5) { setTimeout(() => { window.open(`https://wa.me/${phone}?text=${waText}`, '_blank'); }, 1000);
+            } else { document.getElementById('statusSubtitle').innerText = " (Aviso: El dueño no ha configurado su número)"; }
+            
+            showUpsell();
+        }
+        function showUpsell() {
             // GENERAR UPSELL (Sugerir bebidas o postres extras)
             let cartTitles = cart.map(c => c.title.toLowerCase());
             let upsellCandidates = menuData.filter(item => 
