@@ -609,7 +609,7 @@
             
             const phone = globalConfig.whatsapp ? globalConfig.whatsapp.replace(/\D/g,'') : ''; 
             const encodedText = encodeURIComponent(waText);
-            const waUrl = phone.length > 5 ? `https://wa.me/${phone}?text=${encodedText}` : `https://wa.me/?text=${encodedText}`;
+            const waUrl = phone.length > 5 ? `https://api.whatsapp.com/send/?phone=${phone}&text=${encodedText}` : `https://api.whatsapp.com/send/?text=${encodedText}`;
             setTimeout(() => { window.open(waUrl, '_blank'); }, 1000);
             
             showUpsell();
