@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Premium | La Terraza</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --surface: #1e1e1e;
+            --primary: #ff5e00;
+            --text-light: #ffffff;
+            --text-gray: #a0a0a0;
+            --danger: #ff4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body { background-color: var(--bg-dark); color: var(--text-light); max-width: 600px; margin: 0 auto; min-height: 100vh; padding-bottom: 100px; }
+
+        .header { background: var(--surface); padding: 20px; text-align: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 10; }
+        .header h1 { font-size: 22px; color: var(--primary); }
+
+        .container { padding: 20px; }
+        .section-title { font-size: 18px; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 5px;}
+
+        .card { background: var(--surface); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 13px; color: var(--text-gray); }
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333;
+            background: var(--bg-dark); color: white; font-family: inherit; font-size: 14px;
+        }
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus { outline: none; border-color: var(--primary); }
+
+        .btn { width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; border: none; }
+        .btn-primary { background: var(--primary); color: white; margin-bottom: 15px; }
+        .btn-danger { background: rgba(255, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        
+        .product-item { background: var(--bg-dark); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative; }
+        .product-item .badge-preview { display: inline-block; background: rgba(255,94,0,0.1); color: var(--primary); font-size: 10px; padding: 3px 8px; border-radius: 8px; font-weight: bold; margin-bottom: 10px; }
+        
+        .floating-save {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 560px;
+            background: #25D366; color: white; padding: 15px; border-radius: 20px; text-align: center; font-weight: bold; font-size: 16px;
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4); cursor: pointer; display: none; z-index: 100;
+        }
+
+        .img-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Dashboard Premium</h1>
+        <p style="font-size: 12px; color: var(--text-gray);">Actualiza tu menú en tiempo real</p>
+    </div>
+
+    <div class="container">
+        
+        <div class="card">
+            <h2 class="section-title">Configuración del Restaurante</h2>
+            <div class="input-group">
+                <label>Nombre del Negocio</label>
+                <input type="text" id="configName" oninput="markChanged()">
+            </div>
+            <div class="input-group">
+                <label>Eslogan o Subtítulo</label>
+                <input type="text" id="configSubtitle" oninput="markChanged()">
+            </div>
+            <div class="input-group">
+                <label>URL de Imagen de Portada</label>
+                <input type="text" id="configHero" oninput="markChanged()">
+            </div>
+            <div class="input-group">
+                <label>Tu Número de WhatsApp (Con código de país)</label>
+                <input type="text" id="configPhone" placeholder="Ej. 5215551234567" oninput="markChanged()">
+            </div>
+            <div class="input-group">
+                <label>Link actual de tu menú para clientes:</label>
+                <input type="text" readonly value="https://garcijuve79-cyber.github.io/nfc-menu-vip-demo/nfc_demo_premium/index.html" onclick="this.select();" style="color: var(--primary);">
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">Platillos del Menú</h2>
+            <div id="productsList"></div>
+            <button class="btn btn-primary" onclick="addProduct()">+ Agregar Nuevo Platillo</button>
+        </div>
+
+    </div>
+
+    <div class="floating-save" id="saveBtn" onclick="saveData()">✅ Guardar Todos los Cambios</div>
+
+    <script>
+        let menuData = [];
+        let globalConfig = { 
+            whatsapp: "",
+            restaurantName: "La Terraza Grill",
+            restaurantSubtitle: "Expertos en Cortes & Mixología",
+            heroImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600"
+        };
+        let hasChanges = false;
+
+        window.onload = function() {
+            const savedConfig = localStorage.getItem('miMenuConfigPremium');
+            if(savedConfig) { globalConfig = JSON.parse(savedConfig); }
+
+            document.getElementById('configName').value = globalConfig.restaurantName;
+            document.getElementById('configSubtitle').value = globalConfig.restaurantSubtitle;
+            document.getElementById('configHero').value = globalConfig.heroImage;
+            document.getElementById('configPhone').value = globalConfig.whatsapp;
+
+            const savedData = localStorage.getItem('miMenuDataPremiumV2');
+            if(savedData) {
+                menuData = JSON.parse(savedData);
+            } else {
+                menuData = [
+                    { name: "Burger Clásica", price: 150, description: "200g de carne de res, queso cheddar fundido, tocino crujiente, vegetales frescos y aderezo secreto de la casa.", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400", category: "Hamburguesas", badge: "Favorito ⭐" },
+                    { name: "Ribeye al Carbón", price: 420, description: "Corte Premium de 350g asado a la leña, bañado en mantequilla de ajo y finas hierbas.", image: "https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&q=80&w=400", category: "Cortes", badge: "Especialidad 🔥" },
+                    { name: "Mojito Frutos Rojos", price: 90, description: "Bebida refrescante preparada con ron blanco, hojas de menta fresca, mix de frutos rojos macerados al momento.", image: "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&q=80&w=400", category: "Bebidas", badge: "" },
+                    { name: "Papas Trufadas", price: 120, description: "Papas a la francesa bañadas en aceite de trufa blanca, queso parmesano fresco y perejil.", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=400", category: "Entradas", badge: "Nuevo ✨" },
+                    { name: "Gringas al Pastor", price: 110, description: "Dos gringas con abundante carne al pastor, queso derretido, piña, cilantro y cebolla.", image: "https://images.unsplash.com/photo-1613514785940-daed07799d9b?auto=format&fit=crop&q=80&w=400", category: "Tacos y Más", badge: "" },
+                    { name: "Hotdog Fortachón", price: 95, description: "Salchicha asador envuelta en tocino, cubierta con chili, queso amarillo fundido y jalapeños.", image: "https://images.unsplash.com/photo-1594212686884-a131b78297e2?auto=format&fit=crop&q=80&w=400", category: "Comida Rápida", badge: "Favorito ⭐" },
+                    { name: "Orden de Tacos de Asada", price: 130, description: "5 tacos de jugosa carne asada en tortilla de maíz recién hecha, con su respectiva salsa roja.", image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&q=80&w=400", category: "Tacos y Más", badge: "" },
+                    { name: "Campechana Especial", price: 145, description: "Mezcla perfecta de carne asada y al pastor con queso fundido en tortilla de harina gigante.", image: "https://images.unsplash.com/photo-1584345604476-8ec5e12e42a5?auto=format&fit=crop&q=80&w=400", category: "Tacos y Más", badge: "Especialidad 🔥" },
+                    { name: "Sopa Azteca", price: 85, description: "Tradicional sopa de tortilla con caldo de tomate, aguacate, queso panela, crema y chile pasilla.", image: "https://images.unsplash.com/photo-1548943487-a2e4b43b5930?auto=format&fit=crop&q=80&w=400", category: "Entradas", badge: "Favorito ⭐" },
+                    { name: "Pizza de Pepperoni", price: 210, description: "Pizza tamaño familiar (14 pulgadas) con doble queso mozzarella y rodajas de pepperoni crujiente.", image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&q=80&w=400", category: "Comida Rápida", badge: "" }
+                ];
+            }
+            renderProducts();
+        };
+
+        function markChanged() {
+            hasChanges = true;
+            document.getElementById('saveBtn').style.display = 'block';
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('productsList');
+            let html = "";
+
+            menuData.forEach((item, index) => {
+                html += `
+                <div class="product-item">
+                    ${item.badge ? `<div class="badge-preview">${item.badge}</div>` : ''}
+                    <div class="input-group">
+                        <label>Nombre del Platillo</label>
+                        <input type="text" value="${item.name}" oninput="updateField(${index}, 'name', this.value)">
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <div class="input-group" style="flex:1;">
+                            <label>Precio ($)</label>
+                            <input type="number" value="${item.price}" oninput="updateField(${index}, 'price', this.value)">
+                        </div>
+                        <div class="input-group" style="flex:1;">
+                            <label>Categoría</label>
+                            <input type="text" value="${item.category || ''}" oninput="updateField(${index}, 'category', this.value)">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Etiqueta / Insignia Especial</label>
+                        <select onchange="updateField(${index}, 'badge', this.value)">
+                            <option value="" ${!item.badge ? 'selected' : ''}>Ninguna</option>
+                            <option value="Favorito ⭐" ${item.badge === 'Favorito ⭐' ? 'selected' : ''}>Favorito ⭐</option>
+                            <option value="Especialidad 🔥" ${item.badge === 'Especialidad 🔥' ? 'selected' : ''}>Especialidad 🔥</option>
+                            <option value="Nuevo ✨" ${item.badge === 'Nuevo ✨' ? 'selected' : ''}>Nuevo ✨</option>
+                            <option value="Vegano 🥬" ${item.badge === 'Vegano 🥬' ? 'selected' : ''}>Vegano 🥬</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Descripción corta</label>
+                        <textarea rows="2" oninput="updateField(${index}, 'description', this.value)">${item.description}</textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>URL de Imagen</label>
+                        <input type="text" value="${item.image}" oninput="updateField(${index}, 'image', this.value)">
+                        <img src="${item.image}" class="img-preview" onerror="this.style.display='none'" onload="this.style.display='block'">
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteProduct(${index})">🗑 Eliminar Platillo</button>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function updateField(index, field, value) {
+            menuData[index][field] = value;
+            markChanged();
+        }
+
+        function addProduct() {
+            menuData.unshift({ name: "", price: 0, description: "", image: "", category: "Nuevos", badge: "" });
+            renderProducts();
+            markChanged();
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        function deleteProduct(index) {
+            if(confirm("¿Seguro que deseas eliminar este platillo?")) {
+                menuData.splice(index, 1);
+                renderProducts();
+                markChanged();
+            }
+        }
+
+        function saveData() {
+            globalConfig.restaurantName = document.getElementById('configName').value;
+            globalConfig.restaurantSubtitle = document.getElementById('configSubtitle').value;
+            globalConfig.heroImage = document.getElementById('configHero').value;
+            globalConfig.whatsapp = document.getElementById('configPhone').value;
+
+            localStorage.setItem('miMenuConfigPremium', JSON.stringify(globalConfig));
+            localStorage.setItem('miMenuDataPremiumV2', JSON.stringify(menuData));
+            
+            hasChanges = false;
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('saveBtn').innerText = "¡Guardado Exitosamente!";
+            document.getElementById('saveBtn').style.display = 'block';
+            setTimeout(() => { document.getElementById('saveBtn').style.display = 'none'; document.getElementById('saveBtn').innerText = "✅ Guardar Todos los Cambios"; }, 2000);
+        }
+    </script>
+</body>
+</html>
